@@ -3,6 +3,7 @@
 **Review Date:** 2026-01-28
 **Reviewer:** Claude Opus 4.5
 **Files Reviewed:**
+
 - `/home/jomby/libraries/ng-proto/src/core/src/lib/proto.ts`
 - `/home/jomby/libraries/ng-proto/src/core/src/lib/proto-ancestry.ts`
 - `/home/jomby/libraries/ng-proto/src/core/src/lib/proto.spec.ts`
@@ -19,12 +20,14 @@ The Proto system is a well-architected abstraction for creating composable Angul
 **Overall Assessment:** Good foundation with some areas needing refinement before being considered production-ready for external consumers. The API shows thoughtful design but has some rough edges in type safety, error handling, and documentation that could confuse library users.
 
 **Strengths:**
+
 - Clean separation between internal writable state and public readonly state
 - Elegant ancestry system for parent-child directive communication
 - Flexible configuration hierarchy with deep merge support
 - Hooks system enables extensibility without modifying core directives
 
 **Areas for Improvement:**
+
 - Type safety issues with `as unknown as` casts
 - Missing JSDoc on public API surface
 - Edge cases in controlled input handling
@@ -97,6 +100,7 @@ import { SIGNAL, signalSetFn } from '@angular/core/primitives/signals';
 **Why this matters:** Internal APIs can change without notice between Angular versions. This creates maintenance burden and potential breaking changes for library consumers.
 
 **Recommendation:**
+
 1. Document this dependency prominently in the README
 2. Add integration tests that verify the internal API contract
 3. Consider if there's a public API alternative (there may not be for this use case)
@@ -136,6 +140,7 @@ deepMerge.withOptions = <T extends IObject[]>(options: Partial<IOptions>, ...obj
 **Why this matters:** In concurrent or nested scenarios, this can cause race conditions where one merge operation affects another's options.
 
 **Recommendation:** Either:
+
 1. Make `deepMerge` accept options as a parameter instead of using global state
 2. Remove `deepMerge.withOptions` from the public API and handle options internally
 
@@ -161,7 +166,7 @@ export function createProto<T extends object, C extends object = object>(
 
 **Recommendation:** Add comprehensive JSDoc:
 
-```typescript
+````typescript
 /**
  * Creates a proto definition for a directive or component.
  *
@@ -190,7 +195,7 @@ export function createProto<T extends object, C extends object = object>(
  * }
  * ```
  */
-```
+````
 
 ### 2. Improve Ancestry Chain Memory Management
 
@@ -271,7 +276,7 @@ function initState(instance: T): ProtoState<T, C> {
     // Warn if initState called outside constructor
     if (!isInConstructorContext()) {
       console.warn(
-        `${name}Proto.initState() should be called in the constructor, not in lifecycle hooks.`
+        `${name}Proto.initState() should be called in the constructor, not in lifecycle hooks.`,
       );
     }
 
@@ -280,7 +285,7 @@ function initState(instance: T): ProtoState<T, C> {
     if (!hasInputs) {
       console.warn(
         `${name}Proto.initState() called but no input signals found. ` +
-        `Did you forget to declare inputs?`
+          `Did you forget to declare inputs?`,
       );
     }
   }
@@ -296,7 +301,7 @@ The current metadata includes `protoId` and `protoName`, but not a reference to 
 interface ProtoMetadata<T extends object, C extends object> {
   readonly protoId: string;
   readonly protoName: string;
-  readonly protoType: Type<T>;  // Add this
+  readonly protoType: Type<T>; // Add this
   readonly config: C;
   // ...
 }
@@ -313,8 +318,9 @@ export type ProtoHook<T extends object, C extends object> = (proto: ProtoState<T
 **Recommendation:** Allow hooks to return cleanup functions (similar to `effect`):
 
 ```typescript
-export type ProtoHook<T extends object, C extends object> =
-  (proto: ProtoState<T, C>) => void | (() => void);
+export type ProtoHook<T extends object, C extends object> = (
+  proto: ProtoState<T, C>,
+) => void | (() => void);
 ```
 
 ---
@@ -367,6 +373,7 @@ const TOUCH_EMULATION_DEBOUNCE_MS = 50;
 ### 4. Test File Organization
 
 The `proto.spec.ts` file is quite long (733 lines). Consider splitting into multiple test files:
+
 - `proto-state.spec.ts` - State management tests
 - `proto-ancestry.spec.ts` - Ancestry tests
 - `proto-config.spec.ts` - Configuration hierarchy tests
@@ -384,13 +391,13 @@ The ancestry system is beautifully designed. The API is intuitive:
 
 ```typescript
 // Get immediate parent of same type
-state.ancestry.parent
+state.ancestry.parent;
 
 // Get parent of specific type
-state.ancestry.parentOfType(FocusProto.token)
+state.ancestry.parentOfType(FocusProto.token);
 
 // Get all ancestors with filtering
-state.ancestry.all(e => e.state.protoName === 'ParentDir')
+state.ancestry.all(e => e.state.protoName === 'ParentDir');
 ```
 
 This enables powerful composition patterns without complex DI gymnastics.
@@ -400,9 +407,9 @@ This enables powerful composition patterns without complex DI gymnastics.
 The `ControlledInput` abstraction elegantly solves a real problem: allowing programmatic override of template-bound values while preserving both:
 
 ```typescript
-state().disabled.control(true);   // Programmatic override
-state().disabled.templateValue()  // Still know what template says
-state().disabled.reset()          // Return to template value
+state().disabled.control(true); // Programmatic override
+state().disabled.templateValue(); // Still know what template says
+state().disabled.reset(); // Return to template value
 ```
 
 This is a pattern that would be useful beyond this library.
@@ -413,10 +420,10 @@ The deep merge configuration with multi-provider contributions is a clean soluti
 
 ```typescript
 // Component
-providers: [Proto.provideConfig({ a: 1 })]
+providers: [Proto.provideConfig({ a: 1 })];
 
 // Can be overridden by child
-providers: [Proto.provideConfig({ a: 2 })]  // Wins
+providers: [Proto.provideConfig({ a: 2 })]; // Wins
 ```
 
 The tests demonstrate this working correctly across grandparent/parent/child levels.
@@ -435,6 +442,7 @@ While unconventional, this is a pragmatic solution to prevent misuse.
 ### 5. Comprehensive Test Coverage
 
 The test file covers:
+
 - Basic state management
 - Controlled signal behavior
 - Ancestry chains
@@ -463,19 +471,14 @@ This dual-layer approach handles both global touch events and element-specific i
 ## Recommendations Summary
 
 **Priority 1 (Do before release):**
+
 1. Fix error message typo (`init()` -> `initState()`)
 2. Document Angular internal API dependency
 3. Add JSDoc to `createProto` and `Proto` type
 
-**Priority 2 (Should do soon):**
-4. Rename `PressPrimitive` to `PressProto`
-5. Address `deepMerge.options` global state issue
-6. Add development-mode warnings for common mistakes
+**Priority 2 (Should do soon):** 4. Rename `PressPrimitive` to `PressProto` 5. Address `deepMerge.options` global state issue 6. Add development-mode warnings for common mistakes
 
-**Priority 3 (Nice to have):**
-7. Improve ancestry chain memory management
-8. Support cleanup functions in hooks
-9. Split large test file
+**Priority 3 (Nice to have):** 7. Improve ancestry chain memory management 8. Support cleanup functions in hooks 9. Split large test file
 
 ---
 

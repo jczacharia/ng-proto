@@ -49,18 +49,27 @@ export function createProtoAncestry<T extends object, C extends object>(
   parentChain: readonly ProtoAncestorEntry[],
   currentToken: InjectionToken<ProtoState<T, C>>,
 ): ProtoAncestry<T, C> {
-  // Pre-compute reversed array (nearest first)
+  // Pre-compute reversed array (nearest first) - computed once at creation time
+  // This is O(n) where n is the depth of nesting, but only happens once per proto
   const ancestors = [...parentChain].reverse();
+
+  // Cache parent lookup since it's commonly accessed
+  let cachedParent: ProtoAncestorEntry<T, C> | null | undefined;
 
   return {
     get parent(): ProtoAncestorEntry<T, C> | null {
-      const found = ancestors.find(e => e.token === currentToken);
-      return (found as ProtoAncestorEntry<T, C>) ?? null;
+      // Lazy compute and cache the parent of the same type
+      if (cachedParent === undefined) {
+        const found = ancestors.find(e => e.token === currentToken);
+        cachedParent = (found as ProtoAncestorEntry<T, C>) ?? null;
+      }
+      return cachedParent;
     },
 
     parentOfType<TT extends object, CC extends object>(
       token: InjectionToken<ProtoState<TT, CC>>,
     ): ProtoAncestorEntry<TT, CC> | null {
+      // ancestors is already sorted nearest-first, so find() returns the closest match
       const found = ancestors.find(e => e.token === token);
       return (found as ProtoAncestorEntry<TT, CC>) ?? null;
     },
@@ -82,6 +91,7 @@ export function createProtoAncestry<T extends object, C extends object>(
     },
 
     all(predicate?: (entry: ProtoAncestorEntry) => boolean): ProtoAncestorEntry[] {
+      // Return the cached array directly when no predicate is given
       return predicate ? ancestors.filter(predicate) : ancestors;
     },
   };

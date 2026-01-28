@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'primitive',
+  selector: 'primitive-primitives',
   imports: [],
-  template: `<p>Primitives works!</p>`,
+  template: `
+    <p>Primitives works!</p>
+  `,
   styles: ``,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

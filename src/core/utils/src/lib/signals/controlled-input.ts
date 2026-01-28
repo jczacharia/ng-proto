@@ -1,4 +1,4 @@
-import { InputSignalWithTransform, signal, Signal } from '@angular/core';
+import { InputSignalWithTransform, isDevMode, signal, Signal } from '@angular/core';
 import { SIGNAL, signalSetFn } from '@angular/core/primitives/signals';
 import { isInputSignal, isModelSignal, signalAsReadonly } from './signals-util';
 
@@ -42,6 +42,13 @@ export function controlledInput<S extends InputSignalWithTransform<any, any>>(so
   type P = ControlledInputProps<T, TransformT>;
 
   if (isControlledInput(source)) {
+    // Dev-mode warning when controlledInput is called multiple times
+    if (isDevMode()) {
+      console.warn(
+        `[ng-proto] controlledInput() was called on an already controlled signal. ` +
+          `This may indicate a bug - each signal should only be wrapped once.`,
+      );
+    }
     return source;
   }
 

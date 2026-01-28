@@ -13,6 +13,21 @@ import {
 import { createProto } from '@ng-proto/core';
 
 /**
+ * Time in milliseconds to ignore emulated mouse events after a touch interaction.
+ *
+ * On iOS devices, after a touch event (pointerup/touchend), the browser fires
+ * emulated mouse events with `pointerType="mouse"`. These fake events happen
+ * immediately after onPointerUp and before onFocus, causing unwanted hover states.
+ *
+ * The 50ms window is short enough to catch iOS's emulated events while being
+ * long enough to account for event timing variations. This value is based on
+ * React Spectrum's implementation which has been battle-tested across devices.
+ *
+ * @see https://github.com/adobe/react-spectrum/blob/main/packages/@react-aria/interactions/src/useHover.ts
+ */
+const TOUCH_EMULATION_DEBOUNCE_MS = 50;
+
+/**
  * Global service to track touch/pointer state across all hover interactions.
  * This is necessary because iOS and some touch devices emit fake mouse events
  * after touch events, which can cause "sticky hover" states.
@@ -31,12 +46,8 @@ function setupGlobalTouchListeners(document: Document): void {
 
   const setIgnoreEmulatedMouseEvents = () => {
     ignoreEmulatedMouseEvents = true;
-    // Clear the flag after a short timeout.
-    // iOS fires onPointerEnter with pointerType="mouse" immediately after onPointerUp
-    // and before onFocus. On other devices that don't have this quirk, we don't want
-    // to ignore a mouse hover sometime in the distant future because a user previously
-    // touched the element.
-    setTimeout(() => (ignoreEmulatedMouseEvents = false), 50);
+    // Clear the flag after the debounce period
+    setTimeout(() => (ignoreEmulatedMouseEvents = false), TOUCH_EMULATION_DEBOUNCE_MS);
   };
 
   const handleGlobalPointerEvent = (event: PointerEvent) => {

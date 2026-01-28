@@ -18,8 +18,10 @@ import {
   deepMerge,
   DeepPartial,
   injectElementRef,
+  isDev,
   isFunction,
   isInputSignal,
+  isObject,
   MaybeFn,
   uniqueId,
 } from '@ng-proto/core/utils';
@@ -30,6 +32,15 @@ import {
   ProtoAncestry,
 } from './proto-ancestry';
 
+/**
+ * Internal type representing the writable state before it's made public.
+ * The signal can hold null before initialization.
+ */
+type InternalProtoState<
+  T extends object,
+  C extends object,
+> = WritableSignal<ProtoDirective<T> | null> & ProtoStateProps<T, C>;
+
 export type ProtoDirective<T extends object> = {
   [K in keyof T]: T[K] extends InputSignalWithTransform<infer U, infer TransformT>
     ? ControlledInput<U, TransformT, T[K]>
@@ -38,7 +49,14 @@ export type ProtoDirective<T extends object> = {
       : T[K];
 };
 
-export interface ProtoMetadata<T extends object, C extends object> {
+const PROTO_STATE_SIGNAL: unique symbol = Symbol('PROTO_STATE_SIGNAL');
+
+export function isProtoStateSignal(value: unknown): value is ProtoStateProps<object, object> {
+  return isObject(value) && value[PROTO_STATE_SIGNAL] === true;
+}
+
+export interface ProtoStateProps<T extends object, C extends object> {
+  readonly [PROTO_STATE_SIGNAL]: true;
   readonly protoId: string;
   readonly protoName: string;
   readonly config: C;
@@ -48,7 +66,7 @@ export interface ProtoMetadata<T extends object, C extends object> {
 }
 
 export type ProtoState<T extends object, C extends object> = Signal<ProtoDirective<T>> &
-  ProtoMetadata<T, C>;
+  ProtoStateProps<T, C>;
 
 export type ProtoHook<T extends object, C extends object> = (proto: ProtoState<T, C>) => void;
 
@@ -79,10 +97,10 @@ export function createProto<T extends object, C extends object = object>(
 ): Proto<T, C> {
   const [defaultConfig] = configArgs;
 
-  /** Use for managing writable state */
-  const internalProtoToken = new InjectionToken<
-    WritableSignal<ProtoDirective<T>> & ProtoMetadata<T, C>
-  >(`ProtoInternalState:${name}`);
+  /** Use for managing writable state (can be null before initialization) */
+  const internalProtoToken = new InjectionToken<InternalProtoState<T, C>>(
+    `ProtoInternalState:${name}`,
+  );
 
   /** Use for exposing immutable state and ancestry lookups */
   const publicToken = new InjectionToken<ProtoState<T, C>>(`ProtoToken:${name}`);
@@ -91,7 +109,7 @@ export function createProto<T extends object, C extends object = object>(
   const configToken = new InjectionToken<C>(`ProtoConfig:${name}`);
 
   /** Use for collecting config contributions from hostDirectives (multi provider) */
-  const configContributionToken = new InjectionToken<DeepPartial<C>>(
+  const configContributionToken = new InjectionToken<DeepPartial<C>[]>(
     `ProtoConfigContribution:${name}`,
   );
 
@@ -102,11 +120,14 @@ export function createProto<T extends object, C extends object = object>(
     return [
       {
         provide: internalProtoToken,
-        useFactory: (): ProtoState<T, C> => {
-          const source = signal(null as unknown as ProtoDirective<T>);
+        useFactory: (): InternalProtoState<T, C> => {
+          // Initialize with null - will be set by initState()
+          // The null state indicates the proto is not yet initialized
+          const source = signal<ProtoDirective<T> | null>(null);
           const chain = inject(PROTO_ANCESTRY_CHAIN, { optional: true, skipSelf: true }) ?? [];
 
-          const metadata: ProtoMetadata<T, C> = {
+          const props: ProtoStateProps<T, C> = {
+            [PROTO_STATE_SIGNAL]: true,
             protoId: uniqueId(name),
             protoName: name,
             config: injectConfig(),
@@ -115,20 +136,25 @@ export function createProto<T extends object, C extends object = object>(
             ancestry: createProtoAncestry(chain, publicToken),
           };
 
-          Object.assign(source, metadata);
-          return source as unknown as ProtoState<T, C>;
+          // Combine signal with metadata - Object.assign preserves the signal function
+          return Object.assign(source, props);
         },
       },
       {
         provide: publicToken,
-        useFactory: () => {
+        useFactory: (): ProtoState<T, C> => {
           const proto = inject(internalProtoToken);
 
-          // Forbid mutation on the public token
-          delete (proto as Partial<WritableSignal<ProtoDirective<T>>>).set;
-          delete (proto as Partial<WritableSignal<ProtoDirective<T>>>).update;
+          // Forbid mutation on the public token by removing set/update
+          // This prevents accidental state modification by consumers
+          const publicProto = proto as Partial<WritableSignal<ProtoDirective<T> | null>>;
+          delete publicProto.set;
+          delete publicProto.update;
 
-          return proto;
+          // The public token exposes the proto as if it's always initialized
+          // Accessing the signal before initState() will return null, which
+          // is validated in injectState()
+          return proto as unknown as ProtoState<T, C>;
         },
       },
       {
@@ -137,14 +163,22 @@ export function createProto<T extends object, C extends object = object>(
           const chain = inject(PROTO_ANCESTRY_CHAIN, { optional: true, skipSelf: true }) ?? [];
           const currentProto = inject(internalProtoToken);
 
-          /** Use {@link publicToken} in ancestry entries for proto lookups. */
+          // Use publicToken in ancestry entries for proto lookups
+          // The state is cast because ancestry needs the public token type
           const entry: ProtoAncestorEntry<T, C> = {
             token: publicToken,
-            state: currentProto,
+            state: currentProto as unknown as ProtoState<T, C>,
           };
 
           return [...chain, entry];
         },
+      },
+      // Provide configToken at the state level as a fallback
+      // This ensures config is always available even without explicit provideConfig() calls
+      // Note: provideConfig() also provides this token, which is intentional for hierarchical config
+      {
+        provide: configToken,
+        useFactory: (): C => injectConfig(),
       },
     ];
   }
@@ -156,7 +190,7 @@ export function createProto<T extends object, C extends object = object>(
 
     if (!opts.optional && (!state || !state())) {
       throw new Error(
-        `${name} proto not initialized. Call ${name}Proto.init() in your component or directive.`,
+        `${name} proto not initialized. Call ${name}Proto.initState() in your component or directive constructor.`,
       );
     }
 
@@ -166,25 +200,45 @@ export function createProto<T extends object, C extends object = object>(
   function initState(instance: T): ProtoState<T, C> {
     const proto = inject(internalProtoToken);
 
+    // Check if already initialized
     if (proto()) {
-      throw new Error(`${name} proto already initialized. init() should only be called once.`);
+      if (isDev()) {
+        throw new Error(
+          `[ng-proto] ${name}Proto.initState() was called more than once. ` +
+            `initState() should only be called once in the constructor.`,
+        );
+      }
+      return inject(publicToken);
     }
 
     const injector = inject(Injector);
     const hooks = inject<ProtoHook<T, C>[]>(hooksToken, { optional: true }) ?? [];
 
+    // Wrap all InputSignals with controlled input behavior
+    let inputCount = 0;
     for (const key of Object.keys(instance)) {
       const value = instance[key as keyof T];
       if (isInputSignal(value)) {
         controlledInput(value);
+        inputCount++;
       }
     }
 
+    // Dev-mode warning if no inputs found
+    if (isDev() && inputCount === 0) {
+      console.warn(
+        `[ng-proto] ${name}Proto.initState() called but no input signals found. ` +
+          `Did you forget to declare inputs with input()?`,
+      );
+    }
+
+    // Set the state - the instance is now a ProtoDirective because all inputs are wrapped
     proto.set(instance as ProtoDirective<T>);
 
+    // Run hooks in injection context
     runInInjectionContext(injector, () => {
       for (const hook of hooks) {
-        hook(proto);
+        hook(proto as unknown as ProtoState<T, C>);
       }
     });
 

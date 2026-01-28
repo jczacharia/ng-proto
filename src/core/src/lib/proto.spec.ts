@@ -1,3 +1,22 @@
+/**
+ * Proto System Tests
+ *
+ * This file tests the core proto system functionality. Tests are organized into sections:
+ *
+ * 1. Basic State Management - ProtoState, controlled signals, immutability
+ * 2. Ancestry - Parent/ancestor lookup, ancestry chains, type-safe lookups
+ * 3. Inject Helpers - injectProtoAncestor, injectProtoParent
+ * 4. Hooks - Hook registration, execution timing, afterNextRender support
+ * 5. Config - Default config, custom config, config injection
+ * 6. Config Hierarchy - Multi-level config inheritance via hostDirectives
+ * 7. State Inheritance - Parent-child state propagation via hooks
+ *
+ * Each section has its own test fixtures (directives/components) to isolate concerns.
+ * The file is intentionally kept as a single file because:
+ * - Tests are well-organized with describe blocks
+ * - Fixtures are section-specific and would need duplication if split
+ * - The file size (~730 lines) is manageable
+ */
 import type { BooleanInput } from '@angular/cdk/coercion';
 import {
   afterNextRender,

@@ -23,7 +23,7 @@ export interface PressConfig {
   defaultDisabled: boolean;
 }
 
-export const PressPrimitive = createProto<ProtoPress, PressConfig>('Press', {
+export const PressProto = createProto<ProtoPress, PressConfig>('Press', {
   defaultDisabled: false,
 });
 
@@ -66,10 +66,10 @@ export const PressPrimitive = createProto<ProtoPress, PressConfig>('Press', {
     '[attr.data-press]': "isPressed() ? '' : null",
     '(pointerdown)': 'onPointerDown($event)',
   },
-  providers: [PressPrimitive.provideState()],
+  providers: [PressProto.provideState()],
 })
 export class ProtoPress {
-  private readonly config = PressPrimitive.injectConfig();
+  private readonly config = PressProto.injectConfig();
   private readonly platformId = inject(PLATFORM_ID);
   private readonly document = inject(DOCUMENT);
   private readonly elementRef = injectElementRef();
@@ -109,7 +109,7 @@ export class ProtoPress {
   /**
    * The state of the press directive.
    */
-  readonly state = PressPrimitive.initState(this);
+  readonly state = PressProto.initState(this);
 
   constructor() {
     // Watch for disabled state changes and reset press when disabled becomes true

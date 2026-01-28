@@ -47,7 +47,7 @@ export function isFunction(value: unknown): value is CallableFunction {
  * @param value - The value to check
  * @returns true if the value is a plain object, false otherwise
  */
-export function isObject(value: unknown): value is Record<string, unknown> {
+export function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
@@ -75,7 +75,7 @@ export function isNull(value: unknown): value is null {
  * @returns true if the value is null or undefined, false otherwise
  */
 export function isNil(value: unknown): value is null | undefined {
-  return isUndefined(value) || value === null;
+  return isUndefined(value) || isNull(value);
 }
 
 /**
@@ -176,4 +176,37 @@ export function supportsDisabledAttribute(
   elementRef: ElementRef,
 ): elementRef is ElementRef<HTMLElement & { disabled: boolean }> {
   return elementRef.nativeElement instanceof HTMLElement && 'disabled' in elementRef.nativeElement;
+}
+
+/**
+ * Checks if the current environment matches any of the provided values.
+ * @param env - List of environments to check ('development', 'production', 'test')
+ * @returns True if the current environment is one of the provided values.
+ */
+export function isEnv(...env: ('development' | 'production' | 'test')[]): boolean {
+  return env.includes(process.env['NODE_ENV'] as (typeof env)[number]);
+}
+
+/**
+ * Checks if the current environment is 'test'.
+ * @returns True if environment is 'test'.
+ */
+export function isTest(): boolean {
+  return isEnv('test');
+}
+
+/**
+ * Checks if the current environment is 'development'.
+ * @returns True if environment is 'development'.
+ */
+export function isDev(): boolean {
+  return isEnv('development');
+}
+
+/**
+ * Checks if the current environment is 'production'.
+ * @returns True if environment is 'production'.
+ */
+export function isProd(): boolean {
+  return isEnv('production');
 }

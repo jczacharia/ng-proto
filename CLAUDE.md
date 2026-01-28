@@ -62,6 +62,7 @@ Protos track their hierarchy via `PROTO_ANCESTRY_CHAIN` injection token. Each pr
 ### Directive Pattern
 
 Each core directive (focus, hover, press, button, disable) follows this pattern:
+
 1. Define a proto via `createProto({ name, type, config })`
 2. Inject config and dependencies
 3. Declare inputs/outputs as signals

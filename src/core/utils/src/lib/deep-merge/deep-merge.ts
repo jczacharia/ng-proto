@@ -45,45 +45,7 @@ interface IObject {
   [key: string]: any;
 }
 
-export const deepMerge = <T extends IObject[]>(...objects: T): TMerged<T[number]> =>
-  objects.reduce((result, current) => {
-    if (current === undefined) {
-      return result;
-    }
-
-    if (Array.isArray(current)) {
-      throw new TypeError('Arguments provided to ts-deepmerge must be objects, not arrays.');
-    }
-
-    Object.keys(current).forEach(key => {
-      if (['__proto__', 'constructor', 'prototype'].includes(key)) {
-        return;
-      }
-
-      if (Array.isArray(result[key]) && Array.isArray(current[key])) {
-        result[key] = deepMerge.options.mergeArrays
-          ? deepMerge.options.uniqueArrayItems
-            ? Array.from(new Set((result[key] as unknown[]).concat(current[key])))
-            : [...result[key], ...current[key]]
-          : current[key];
-      } else if (isObject(result[key]) && isObject(current[key])) {
-        result[key] = deepMerge(result[key] as IObject, current[key] as IObject);
-      } else if (!isObject(result[key]) && isObject(current[key])) {
-        result[key] = deepMerge(current[key], undefined);
-      } else {
-        result[key] =
-          current[key] === undefined
-            ? deepMerge.options.allowUndefinedOverrides
-              ? current[key]
-              : result[key]
-            : current[key];
-      }
-    });
-
-    return result;
-  }, {}) as any;
-
-interface IOptions {
+export interface DeepMergeOptions {
   /**
    * When `true`, values explicitly provided as `undefined` will override existing values, though properties that are simply omitted won't affect anything.
    * When `false`, values explicitly provided as `undefined` won't override existing values.
@@ -109,23 +71,85 @@ interface IOptions {
   uniqueArrayItems: boolean;
 }
 
-const defaultOptions: IOptions = {
+const defaultOptions: Readonly<DeepMergeOptions> = Object.freeze({
   allowUndefinedOverrides: true,
   mergeArrays: true,
   uniqueArrayItems: true,
-};
+});
 
+/**
+ * Internal implementation that accepts options as a parameter to avoid global state.
+ */
+function deepMergeWithOptions<T extends IObject[]>(
+  options: DeepMergeOptions,
+  ...objects: T
+): TMerged<T[number]> {
+  return objects.reduce((result, current) => {
+    if (current === undefined) {
+      return result;
+    }
+
+    if (Array.isArray(current)) {
+      throw new TypeError('Arguments provided to ts-deepmerge must be objects, not arrays.');
+    }
+
+    Object.keys(current).forEach(key => {
+      if (['__proto__', 'constructor', 'prototype'].includes(key)) {
+        return;
+      }
+
+      if (Array.isArray(result[key]) && Array.isArray(current[key])) {
+        result[key] = options.mergeArrays
+          ? options.uniqueArrayItems
+            ? Array.from(new Set((result[key] as unknown[]).concat(current[key])))
+            : [...result[key], ...current[key]]
+          : current[key];
+      } else if (isObject(result[key]) && isObject(current[key])) {
+        result[key] = deepMergeWithOptions(
+          options,
+          result[key] as IObject,
+          current[key] as IObject,
+        );
+      } else if (!isObject(result[key]) && isObject(current[key])) {
+        result[key] = deepMergeWithOptions(options, current[key], undefined);
+      } else {
+        result[key] =
+          current[key] === undefined
+            ? options.allowUndefinedOverrides
+              ? current[key]
+              : result[key]
+            : current[key];
+      }
+    });
+
+    return result;
+  }, {}) as any;
+}
+
+/**
+ * Deep merges multiple objects together.
+ * Uses default options - for custom options use `deepMerge.withOptions()`.
+ */
+export const deepMerge = <T extends IObject[]>(...objects: T): TMerged<T[number]> =>
+  deepMergeWithOptions(defaultOptions, ...objects);
+
+/**
+ * Read-only access to default options.
+ * @deprecated Modifying options directly is no longer supported. Use `deepMerge.withOptions()` instead.
+ */
 deepMerge.options = defaultOptions;
 
-deepMerge.withOptions = <T extends IObject[]>(options: Partial<IOptions>, ...objects: T) => {
-  deepMerge.options = {
+/**
+ * Deep merges objects with custom options.
+ * This is now the preferred way to use custom merge options as it avoids global state mutation.
+ */
+deepMerge.withOptions = <T extends IObject[]>(
+  options: Partial<DeepMergeOptions>,
+  ...objects: T
+): TMerged<T[number]> => {
+  const mergedOptions: DeepMergeOptions = {
     ...defaultOptions,
     ...options,
   };
-
-  const result = deepMerge(...objects);
-
-  deepMerge.options = defaultOptions;
-
-  return result;
+  return deepMergeWithOptions(mergedOptions, ...objects);
 };
