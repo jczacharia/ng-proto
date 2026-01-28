@@ -1,10 +1,10 @@
+// @ts-check
+import angularConfig from '../../eslint.angular.config.mjs';
 import baseConfig from '../../eslint.base.config.mjs';
-import nx from '@nx/eslint-plugin';
-import baseConfig from '../../eslint.config.mjs';
 
 export default [
   ...baseConfig,
-  ...baseConfig,
+  ...angularConfig,
   {
     files: ['**/*.json'],
     rules: {
@@ -19,10 +19,9 @@ export default [
       parser: await import('jsonc-eslint-parser'),
     },
   },
-  ...nx.configs['flat/angular'],
-  ...nx.configs['flat/angular-template'],
   {
     files: ['**/*.ts'],
+    ignores: ['**/*.spec.ts'],
     rules: {
       '@angular-eslint/directive-selector': [
         'error',

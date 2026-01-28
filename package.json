@@ -2,10 +2,17 @@
   "name": "@ng-proto/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "start": "nx serve documentation",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "fix": "prettier --write . && nx run-many -t lint --fix",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' nx run-many -t build"
+  },
   "private": true,
   "dependencies": {
     "@angular-devkit/build-angular": "~21.1.2",
+    "@angular/cdk": "21.2.0-next.1",
     "@angular/common": "21.2.0-next.0",
     "@angular/compiler": "21.2.0-next.0",
     "@angular/core": "21.2.0-next.0",
@@ -42,6 +49,8 @@
     "@swc-node/register": "~1.9.2",
     "@swc/core": "~1.5.29",
     "@swc/helpers": "~0.5.18",
+    "@testing-library/angular": "^19.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/express": "^5.0.6",
     "@types/node": "20.19.9",
     "@typescript-eslint/utils": "^8.54.0",

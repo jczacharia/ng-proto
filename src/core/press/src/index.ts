@@ -1,1 +1,1 @@
-export * from './lib/press-module';
+export * from './lib/press';

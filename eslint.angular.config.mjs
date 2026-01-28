@@ -14,10 +14,11 @@ export default [
       '@angular-eslint/prefer-signals': 'warn',
       '@angular-eslint/prefer-standalone': 'warn',
       '@angular-eslint/no-input-rename': 'off',
+      '@angular-eslint/no-output-rename': 'off',
     },
   },
   {
-    files: ['**/*.spec.ts', '**/*.spec.*.html'],
+    files: ['**/*.spec.ts'],
     rules: {
       '@angular-eslint/directive-selector': 'off',
       '@angular-eslint/component-selector': 'off',

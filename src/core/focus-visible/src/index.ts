@@ -1,1 +1,1 @@
-export * from './lib/focus-visible-module';
+export * from './lib/focus-visible';

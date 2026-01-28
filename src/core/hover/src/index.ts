@@ -1,1 +1,1 @@
-export * from './lib/hover-module';
+export * from './lib/hover';
