@@ -1,7 +1,93 @@
 import type { BooleanInput, NumberInput } from '@angular/cdk/coercion';
 import { booleanAttribute, computed, Directive, input, numberAttribute } from '@angular/core';
-import { injectElementRef, listener, supportsDisabledAttribute } from '@ng-proto/core/utils';
-import { InteractProto, ProtoInteractEventTypes } from './interact-proto';
+import { createProto } from '@ng-proto/core';
+import { injectElementRef, listener, Obj, supportsDisabledAttribute } from '@ng-proto/core/utils';
+
+export const ProtoInteractEvents = new Set([
+  'click',
+  'keydown',
+  'keyup',
+  'pointerdown',
+  'mousedown',
+] as const);
+
+export type ProtoInteractEventTypes = typeof ProtoInteractEvents extends Set<infer T> ? T : never;
+
+export interface ProtoInteractEventConfig {
+  /**
+   * Whether to capture the event.
+   * @default true
+   */
+  capture: boolean;
+
+  /**
+   * Whether to only handle the event on the current element.
+   * If true, the event will be handled only if the target is the current element.
+   * If false, bubbled events from children will be handled as well.
+   * @default true
+   */
+  selfOnly: boolean;
+
+  /**
+   * Whether to prevent the default action of the event.
+   * @default true
+   */
+  preventDefault: boolean;
+
+  /**
+   * Whether to stop the immediate propagation of the event.
+   * @default true
+   */
+  stopImmediatePropagation: boolean;
+}
+
+export interface ProtoInteractConfig {
+  /**
+   * The fallback tab index to use when the element's `tabindex` attribute is absent.
+   * @default 0
+   */
+  fallbackTabIndex: number;
+
+  /**
+   * The event configuration to handle.
+   * @default
+   * ```ts
+   * {
+   *   capture: true,
+   *   selfOnly: true,
+   *   preventDefault: true,
+   *   stopImmediatePropagation: true,
+   * }
+   * ```
+   * -for all events.
+   */
+  events: Record<ProtoInteractEventTypes, ProtoInteractEventConfig>;
+}
+
+export function createProtoInteractDefaultConfig(
+  opts: { fallbackTabIndex?: number; allEvents?: Partial<ProtoInteractEventConfig> } = {},
+): ProtoInteractConfig {
+  return {
+    fallbackTabIndex: opts.fallbackTabIndex ?? 0,
+    events: Obj.fromEntries(
+      Array.from(ProtoInteractEvents).map(event => [
+        event,
+        {
+          capture: true,
+          selfOnly: true,
+          preventDefault: true,
+          stopImmediatePropagation: true,
+          ...opts.allEvents,
+        } satisfies ProtoInteractEventConfig,
+      ]),
+    ),
+  };
+}
+
+export const InteractProto = createProto<ProtoInteract, ProtoInteractConfig>(
+  'Interact',
+  createProtoInteractDefaultConfig,
+);
 
 /**
  * Base interactive directive providing common states and accessibility features.
@@ -204,8 +290,12 @@ export class ProtoInteract {
       'click' satisfies ProtoInteractEventTypes,
       event => {
         if (this.disabled() && (!click.selfOnly || event.target === event.currentTarget)) {
-          if (click.preventDefault) event.preventDefault();
-          if (click.stopImmediatePropagation) event.stopImmediatePropagation();
+          if (click.preventDefault) {
+            event.preventDefault();
+          }
+          if (click.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
         }
       },
       { config: { capture: click.capture } },
@@ -224,8 +314,12 @@ export class ProtoInteract {
           event.key !== 'Tab' &&
           (!keydown.selfOnly || event.target === event.currentTarget)
         ) {
-          if (keydown.preventDefault) event.preventDefault();
-          if (keydown.stopImmediatePropagation) event.stopImmediatePropagation();
+          if (keydown.preventDefault) {
+            event.preventDefault();
+          }
+          if (keydown.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
         }
       },
       { config: { capture: keydown.capture } },
@@ -239,8 +333,12 @@ export class ProtoInteract {
       'keyup' satisfies ProtoInteractEventTypes,
       event => {
         if (this.disabled() && (!keyup.selfOnly || event.target === event.currentTarget)) {
-          if (keyup.preventDefault) event.preventDefault();
-          if (keyup.stopImmediatePropagation) event.stopImmediatePropagation();
+          if (keyup.preventDefault) {
+            event.preventDefault();
+          }
+          if (keyup.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
         }
       },
       { config: { capture: keyup.capture } },
@@ -254,8 +352,12 @@ export class ProtoInteract {
       'pointerdown' satisfies ProtoInteractEventTypes,
       event => {
         if (this.disabled() && (!pointerdown.selfOnly || event.target === event.currentTarget)) {
-          if (pointerdown.preventDefault) event.preventDefault();
-          if (pointerdown.stopImmediatePropagation) event.stopImmediatePropagation();
+          if (pointerdown.preventDefault) {
+            event.preventDefault();
+          }
+          if (pointerdown.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
         }
       },
       { config: { capture: pointerdown.capture } },
@@ -270,8 +372,12 @@ export class ProtoInteract {
       'mousedown' satisfies ProtoInteractEventTypes,
       event => {
         if (this.disabled() && (!mousedown.selfOnly || event.target === event.currentTarget)) {
-          if (mousedown.preventDefault) event.preventDefault();
-          if (mousedown.stopImmediatePropagation) event.stopImmediatePropagation();
+          if (mousedown.preventDefault) {
+            event.preventDefault();
+          }
+          if (mousedown.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
         }
       },
       { config: { capture: mousedown.capture } },

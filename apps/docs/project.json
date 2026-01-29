@@ -2,9 +2,9 @@
   "name": "docs",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "prefix": "app",
+  "prefix": "docs",
   "sourceRoot": "apps/docs/src",
-  "tags": [],
+  "tags": ["docs"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",

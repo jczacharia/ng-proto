@@ -27,7 +27,7 @@ export default [
               onlyDependOnLibsWithTags: ['core'],
             },
             {
-              sourceTag: 'app',
+              sourceTag: 'docs',
               onlyDependOnLibsWithTags: ['core', 'primitives'],
             },
           ],

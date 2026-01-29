@@ -8,9 +8,15 @@
     "fix": "pnpm format && nx run-many -t lint --fix --no-tui",
     "pre:commit": "pnpm format && nx run-many -t lint --fix --no-tui",
     "pre:push": "pnpm format && nx run-many -t lint test --fix --no-tui",
-    "start": "nx serve documentation",
+    "start": "nx serve docs",
     "test": "nx run-many -t test --watch --no-tui",
     "build": "nx run-many -t build"
+  },
+  "lint-staged": {
+    "*.{ts,js,tsx,jsx,mjs,cjs,html,json,md,css,scss}": [
+      "prettier --write --ignore-unknown",
+      "eslint --fix"
+    ]
   },
   "private": true,
   "dependencies": {
@@ -55,6 +61,7 @@
     "@swc/helpers": "~0.5.18",
     "@testing-library/angular": "^19.0.0",
     "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/express": "^5.0.6",
     "@types/node": "20.19.9",
     "@typescript-eslint/utils": "^8.54.0",
@@ -68,6 +75,7 @@
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
     "jsonc-eslint-parser": "^2.4.2",
+    "lint-staged": "^16.2.7",
     "ng-packagr": "~21.1.0",
     "nx": "22.5.0-beta.1",
     "postcss": "^8.5.6",

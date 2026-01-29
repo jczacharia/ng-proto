@@ -1,12 +1,22 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideClientHydration, withIncrementalHydration } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { appRoutes } from './app.routes';
+import { DocsAnchor } from './docs-anchor';
+import { Test } from './test';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideClientHydration(withEventReplay()),
+    provideClientHydration(withIncrementalHydration()),
     provideBrowserGlobalErrorListeners(),
-    provideRouter(appRoutes),
+    provideRouter([
+      {
+        path: '',
+        component: Test,
+      },
+      {
+        path: 'anchor',
+        component: DocsAnchor,
+      },
+    ]),
   ],
 };

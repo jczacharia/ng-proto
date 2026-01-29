@@ -91,3 +91,43 @@ Imports use `@ng-proto/core`, `@ng-proto/core/focus`, `@ng-proto/core/utils`, `@
 - Prefix unused variables with `_`
 - Prettier: single quotes, semicolons, trailing commas, 100 char width, arrow parens avoided
 - Selector prefix: `proto` for core, `primitive` for primitives
+
+## Implementation Excellence Standards
+
+When implementing new primitives or features, follow the **ProtoAnchor gold standard**:
+
+### 1. Research First
+
+- Use **Ref MCP tool** to get latest documentation on web platform APIs
+- Research how established libraries (Angular CDK, Radix UI, Floating UI) solve similar problems
+- Prefer modern web platform features (CSS anchor positioning, Popover API, etc.) over JS-heavy solutions
+
+### 2. API Design
+
+- Design the API based on user's specified pattern before implementing
+- Favor structural directives (`*protoX`) when show/hide logic can be encapsulated
+- Use `exportAs` for template reference access to directive methods
+- Provide both declarative (inputs) and imperative (methods/signals) control
+
+### 3. Comprehensive Examples
+
+- Create **10+ examples** in `apps/docs/src/app/` demonstrating all features
+- Include examples for: basic usage, all configuration options, edge cases, accessibility patterns
+- Add proper CSS styles to make examples visually clear and useful
+
+### 4. Thorough Testing
+
+- Write **40+ tests** for complex features
+- Test: basic functionality, state management, accessibility attributes, CSS properties, edge cases
+- Use `@testing-library/angular` patterns
+
+### 5. Visual Verification
+
+- Run `nx serve docs` and verify examples in Chrome browser
+- Test interactive behaviors (click, hover, keyboard)
+- Check browser console for errors
+- Verify CSS is applying correctly
+
+### Reference Implementation
+
+See `src/core/anchor/` (ProtoAnchor) as the exemplar for this standard.

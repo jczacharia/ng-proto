@@ -11,8 +11,7 @@ import {
 } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { fireEvent, render, screen } from '@testing-library/angular';
-import { ProtoInteract } from './interact';
-import { InteractProto } from './interact-proto';
+import { InteractProto, ProtoInteract } from './interact';
 
 describe('ProtoDisable', () => {
   describe('disabled state', () => {
@@ -368,7 +367,9 @@ describe('ProtoDisable', () => {
           effect(() => {
             const value = state();
             const parent = state.ancestry.parent?.state();
-            if (!parent) return;
+            if (!parent) {
+              return;
+            }
 
             // If the parent is disabled, sync the disabled state to the child
             // and ensure the tab index is <= to -1 to prevent focus

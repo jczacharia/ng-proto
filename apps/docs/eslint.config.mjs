@@ -1,11 +1,10 @@
-import nx from '@nx/eslint-plugin';
+// @ts-check
+import angularConfig from '../../eslint.angular.config.mjs';
 import baseConfig from '../../eslint.base.config.mjs';
 
 export default [
   ...baseConfig,
-  ...baseConfig,
-  ...nx.configs['flat/angular'],
-  ...nx.configs['flat/angular-template'],
+  ...angularConfig,
   {
     files: ['**/*.ts'],
     rules: {
@@ -13,7 +12,7 @@ export default [
         'error',
         {
           type: 'attribute',
-          prefix: 'app',
+          prefix: 'docs',
           style: 'camelCase',
         },
       ],
@@ -21,7 +20,7 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'app',
+          prefix: 'docs',
           style: 'kebab-case',
         },
       ],

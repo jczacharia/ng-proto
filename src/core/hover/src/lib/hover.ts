@@ -41,7 +41,9 @@ let ignoreEmulatedMouseEvents = false;
 let globalListenersSetup = false;
 
 function setupGlobalTouchListeners(document: Document): void {
-  if (globalListenersSetup) return;
+  if (globalListenersSetup) {
+    return;
+  }
   globalListenersSetup = true;
 
   const setIgnoreEmulatedMouseEvents = () => {

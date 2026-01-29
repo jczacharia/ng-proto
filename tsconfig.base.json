@@ -25,7 +25,9 @@
       "@ng-proto/core/button": ["src/core/button/src/index.ts"],
       "@ng-proto/primitives/button": ["src/primitives/button/src/index.ts"],
       "@ng-proto/core/utils": ["src/core/utils/src/index.ts"],
-      "@ng-proto/core/interact": ["src/core/interact/src/index.ts"]
+      "@ng-proto/core/interact": ["src/core/interact/src/index.ts"],
+      "@ng-proto/core/anchor": ["src/core/anchor/src/index.ts"],
+      "@ng-proto/primitives/tooltip": ["src/primitives/tooltip/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -6,7 +6,7 @@ import {
   isNativeButtonTag,
   isNativeInputTag,
 } from '@ng-proto/core/utils';
-import { createProtoInteractDefaultConfig, InteractProto } from './interact-proto';
+import { createProtoInteractDefaultConfig, InteractProto } from './interact';
 
 export interface ProtoInteractButtonConfig {
   /**

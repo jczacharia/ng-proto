@@ -134,12 +134,6 @@ export const deepMerge = <T extends IObject[]>(...objects: T): TMerged<T[number]
   deepMergeWithOptions(defaultOptions, ...objects);
 
 /**
- * Read-only access to default options.
- * @deprecated Modifying options directly is no longer supported. Use `deepMerge.withOptions()` instead.
- */
-deepMerge.options = defaultOptions;
-
-/**
  * Deep merges objects with custom options.
  * This is now the preferred way to use custom merge options as it avoids global state mutation.
  */
